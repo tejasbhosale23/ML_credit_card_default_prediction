@@ -20,18 +20,19 @@ class DataTransformationConfig:
 
 class DataTransformation:
     def __init__(self):
-        self.date_transformation_config = DataTransformationConfig()
+        self.data_transformation_config = DataTransformationConfig()
 
     def get_data_transformer_object(self):
         """
         This function is responsible for data transformation
         """
         try:
-            df = pd.read_csv('artifacts/train.csv')
+            df1 = pd.read_csv('artifacts/train.csv')
+            df = df1.drop('default.payment.next.month', axis=1)
 
-            cat_features = [feature for feature in df if df[feature].dtype == 'O']
+            cat_features = [feature for feature in df.columns if df[feature].dtype == 'O']
 
-            num_features = [feature for feature in df if df[feature].dtype != 'O']
+            num_features = [feature for feature in df.columns if df[feature].dtype != 'O']
 
             num_pipeline = Pipeline(
                 steps = [
@@ -63,7 +64,7 @@ class DataTransformation:
             raise CustomException(e, sys)
         
 
-    def initialize_date_transformation(self, train_path, test_path):
+    def initialize_data_transformation(self, train_path, test_path):
         try:
             train_df = pd.read_csv(train_path)
             test_df = pd.read_csv(test_path)
@@ -72,10 +73,10 @@ class DataTransformation:
 
             preprocessing_obj = self.get_data_transformer_object()
 
-            target_column_name = 'default'
+            target_column_name = 'default.payment.next.month'
 
-            df = pd.read_csv('artifacts/train.csv')
-            numerical_column = [feature for feature in df if df[feature].dtype != 'O']
+            # df = pd.read_csv('artifacts/train.csv')
+            # numerical_column = [feature for feature in df if df[feature].dtype != 'O']
 
 
             input_feature_train_df = train_df.drop(columns=[target_column_name])
@@ -97,16 +98,22 @@ class DataTransformation:
                 input_feature_test_arr, np.array(target_feature_test_df)
             ]
 
+# np.c_ - This is a special object in numpy that allows for concatenation
+#         along the second axis.
+
+# train_arr = concatenates 'input_feature_train_arr' and numpy array version of 
+#             'target_feature_train_df' column wise.
+
             logging.info(f'save preprocessing object')
 
             save_object(
-                file_path = self.date_transformation_config.preprocessor_obj_file_path,
+                file_path = self.data_transformation_config.preprocessor_obj_file_path,
                 obj = preprocessing_obj
             )
             return (
                 train_arr,
                 test_arr,
-                self.date_transformation_config.preprocessor_obj_file_path,
+                self.data_transformation_config.preprocessor_obj_file_path,
             )
         except Exception as e:
             raise CustomException(e, sys)
